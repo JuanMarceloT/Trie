@@ -57,7 +57,75 @@ impl<K:Eq + Identifiable, V> HashMap <K, V> {
 
 
 
+#[derive(Default, Debug)]
+struct TrieNode {
+    children: HashMap<char, TrieNode>,
+    is_end_of_word: bool,
+}
 
-fn main(){
-    
+impl TrieNode {
+    fn new() -> Self {
+        TrieNode {
+            children: HashMap::new(26),
+            is_end_of_word: false,
+        }
+    }
+}
+
+struct Trie {
+    root: TrieNode,
+}
+
+impl Trie {
+    fn new() -> Self {
+        Trie {
+            root: TrieNode::new(),
+        }
+    }
+
+    fn insert(&mut self, word: &str) {
+        let mut node = &mut self.root;
+        for ch in word.chars() {
+            if node.children.get(&ch).is_none() {
+                node.children.insert(ch, TrieNode::new());
+            }
+            node = node.children.get(&ch).unwrap();
+        }
+        node.is_end_of_word = true;
+    }
+
+    fn search(&mut self, word: &str) -> bool {
+        let mut node = &mut self.root;
+        for ch in word.chars() {
+            match node.children.get(&ch) {
+                Some(next_node) => node = next_node,
+                None => return false,
+            }
+        }
+        //println!("{:?}", node.children);
+        node.is_end_of_word
+    }
+
+    fn starts_with(&mut self, prefix: &str) -> bool {
+        let mut node = &mut self.root;
+        for ch in prefix.chars() {
+            match node.children.get(&ch) {
+                Some(next_node) => node = next_node,
+                None => return false,
+            }
+        }
+        true
+    }
+}
+
+fn main() {
+    let mut trie = Trie::new();
+
+    trie.insert("hello");
+    trie.insert("helium");
+
+    println!("{}", trie.search("hello")); // true
+    println!("{}", trie.search("hell"));   // false
+    println!("{}", trie.starts_with("hellp"));   // false
+    println!("{}", trie.starts_with("hell"));   // true
 }
