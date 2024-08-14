@@ -1,5 +1,4 @@
 
-
 trait Identifiable {
     fn id(&self) -> i32;
 }
@@ -16,7 +15,7 @@ impl Identifiable for char {
         r
     }
 }
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 struct HashMap<K, V> {
     buckets: Vec<Vec<(K, V)>>,
     modulo: usize,
@@ -57,10 +56,11 @@ impl<K:Eq + Identifiable, V> HashMap <K, V> {
 
 
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 struct TrieNode {
     children: HashMap<char, TrieNode>,
     is_end_of_word: bool,
+    has_id: bool,
 }
 
 impl TrieNode {
@@ -68,6 +68,7 @@ impl TrieNode {
         TrieNode {
             children: HashMap::new(26),
             is_end_of_word: false,
+            has_id: false
         }
     }
 }
@@ -75,11 +76,27 @@ impl TrieNode {
 struct Trie {
     root: TrieNode,
 }
-
+#[allow(dead_code)]
 impl Trie {
     fn new() -> Self {
         Trie {
             root: TrieNode::new(),
+        }
+    }
+
+    fn insert_with_id(&mut self, word: &str, id: u32) {
+        let mut node = &mut self.root;
+        for ch in word.chars() {
+            if node.children.get(&ch).is_none() {
+                node.children.insert(ch, TrieNode::new());
+            }
+            node = node.children.get(&ch).unwrap();
+        }
+        node.is_end_of_word = true;
+        if let Some(c) = char::from_u32(id) {
+            node.children.insert(c, TrieNode::new());
+            node = node.children.get(&c).unwrap();
+            node.has_id = true;
         }
     }
 
@@ -93,7 +110,6 @@ impl Trie {
         }
         node.is_end_of_word = true;
     }
-
     fn search(&mut self, word: &str) -> bool {
         let mut node = &mut self.root;
         for ch in word.chars() {
@@ -106,6 +122,28 @@ impl Trie {
         node.is_end_of_word
     }
 
+    fn get_id(&mut self, word: &str) -> Option<i32> {
+        let mut node = &mut self.root;
+        for ch in word.chars() {
+            match node.children.get(&ch) {
+                Some(next_node) => node = next_node,
+                None => return None,
+            }
+        }
+
+        
+        if node.is_end_of_word {
+            for item in node.children.buckets.iter() {
+                if !item.is_empty() && item[0].1.has_id {
+                    return Some(item[0].0 as i32);
+                }
+            }
+        }
+        
+        None
+    }
+
+
     fn starts_with(&mut self, prefix: &str) -> bool {
         let mut node = &mut self.root;
         for ch in prefix.chars() {
@@ -116,16 +154,57 @@ impl Trie {
         }
         true
     }
+
+    fn get_words_starting_with(&mut self, prefix: &str) -> Vec<String> {
+        let mut node = self.root.clone();
+            for ch in prefix.chars() {
+                match node.children.get(&ch) {
+                    Some(next_node) => node = next_node.clone(),
+                    None => return Vec::new(),
+                }
+        }
+        
+        let mut result = Vec::new();
+        
+        self.collect_words(&node, &prefix.to_string(), &mut result);
+        result
+    }
+
+    fn collect_words(&mut self, node: &TrieNode, prefix: &String, result: &mut Vec<String>) {
+
+        if node.is_end_of_word {
+            result.push(prefix.clone());
+        }
+
+        for bucket in node.children.buckets.iter() {
+
+            if !bucket.is_empty() {
+                let mut new_prefix = prefix.clone();
+                new_prefix.push(bucket[0].0);
+                self.collect_words(&bucket[0].1, &new_prefix, result);
+            }
+         }
+    }
+    
 }
 
 fn main() {
     let mut trie = Trie::new();
 
-    trie.insert("hello");
-    trie.insert("helium");
+    trie.insert_with_id("hello", 5);
+    trie.insert("hellods");
+    trie.insert("hellodsdasdas");
+    trie.insert("hellodsssda");
 
-    println!("{}", trie.search("hello")); // true
-    println!("{}", trie.search("hell"));   // false
-    println!("{}", trie.starts_with("hellp"));   // false
-    println!("{}", trie.starts_with("hell"));   // true
+     match trie.get_id("hello"){
+         Some(id) => println!("OPA {}", id),
+         None => {println!("OPA")}
+     };
+
+
+
+     //println!("{:?}", trie.get_words_starting_with("hello")); // true
+    // println!("{}", trie.search("hell"));   // false
+    // println!("{}", trie.starts_with("hellp"));   // false
+    // println!("{}", trie.starts_with("hell"));   // true
 }
