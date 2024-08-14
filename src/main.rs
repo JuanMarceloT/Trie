@@ -190,22 +190,95 @@ impl Trie {
 }
 
 fn main() {
-    let mut trie = Trie::new();
+    
+}
 
-    trie.insert_with_id("hello", 5);
-    trie.insert("hellods");
-    trie.insert("hellodsdasdas");
-    trie.insert("hellodsssda");
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-     match trie.get_id("hello"){
-         Some(id) => println!("OPA {}", id),
-         None => {println!("OPA")}
-     };
+    #[test]
+    fn test_hashmap_insertion_and_get() {
+        let mut map = HashMap::new(10);
+        
+        // Test insertion
+        map.insert(1, "one");
+        map.insert(2, "two");
+        map.insert(10, "ten");
+        
+        // Test retrieval
+        assert_eq!(map.get(&1), Some(&mut "one"));
+        assert_eq!(map.get(&2), Some(&mut "two"));
+        assert_eq!(map.get(&10), Some(&mut "ten"));
+        assert_eq!(map.get(&3), None); // Key does not exist
+    }
 
+    #[test]
+    fn test_trie_insertion_and_search() {
+        let mut trie = Trie::new();
+        
+        // Test insertion
+        trie.insert("hello");
+        trie.insert("hell");
+        trie.insert("helicopter");
+        
+        // Test search
+        assert!(trie.search("hello"));
+        assert!(trie.search("hell"));
+        assert!(trie.search("helicopter"));
+        assert!(!trie.search("helic"));
+        assert!(!trie.search("helloo"));
+    }
 
+    #[test]
+    fn test_trie_insert_with_id_and_get_id() {
+        let mut trie = Trie::new();
+        
+        // Test insertion with ID
+        trie.insert_with_id("apple", 65);
+        trie.insert_with_id("banana", 66);
+        trie.insert("cherry");
+        
+        // Test get_id
+        assert_eq!(trie.get_id("apple"), Some(65));
+        assert_eq!(trie.get_id("banana"), Some(66));
+        assert_eq!(trie.get_id("cherry"), None); // no id
+    }
 
-     //println!("{:?}", trie.get_words_starting_with("hello")); // true
-    // println!("{}", trie.search("hell"));   // false
-    // println!("{}", trie.starts_with("hellp"));   // false
-    // println!("{}", trie.starts_with("hell"));   // true
+    #[test]
+    fn test_trie_starts_with() {
+        let mut trie = Trie::new();
+        
+        // Test insertion
+        trie.insert("apple");
+        trie.insert("app");
+        trie.insert("banana");
+        
+        // Test starts_with
+        assert!(trie.starts_with("app"));
+        assert!(trie.starts_with("banana"));
+        assert!(!trie.starts_with("bananas"));
+        assert!(!trie.starts_with("bat"));
+    }
+
+    #[test]
+    fn test_trie_get_words_starting_with() {
+        let mut trie = Trie::new();
+        
+        // Test insertion
+        trie.insert("apple");
+        trie.insert("app");
+        trie.insert("banana");
+        trie.insert("bat");
+        
+        // Test get_words_starting_with
+        let words_with_app = trie.get_words_starting_with("app");
+        assert_eq!(words_with_app, vec!["app".to_string(), "apple".to_string()]);
+        
+        let words_with_b = trie.get_words_starting_with("b");
+        assert_eq!(words_with_b, vec!["banana".to_string(), "bat".to_string()]);
+        
+        let words_with_nonexistent_prefix = trie.get_words_starting_with("nonexistent");
+        assert_eq!(words_with_nonexistent_prefix, Vec::<String>::new());
+    }
 }
