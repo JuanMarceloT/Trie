@@ -178,11 +178,12 @@ impl Trie {
 
         for bucket in node.children.buckets.iter() {
 
-            if !bucket.is_empty() {
+            if let Some((character, child_node)) = bucket.first() {
                 let mut new_prefix = prefix.clone();
-                new_prefix.push(bucket[0].0);
-                self.collect_words(&bucket[0].1, &new_prefix, result);
+                new_prefix.push(*character);
+                self.collect_words(child_node, &new_prefix, result);
             }
+            
          }
     }
     
